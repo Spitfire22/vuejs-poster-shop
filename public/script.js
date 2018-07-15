@@ -6,12 +6,12 @@ new Vue({
 
     data: {
         total: 0,
-        items: [
-            {id: 1, title: 'item 1'},
-            {id: 2, title: 'item 2'},
-            {id: 3, title: 'item 3'}
-        ],
-        cart: []
+        items: [],
+        cart: [],
+        newSearch: 'futurama',
+        lastSearch: '',
+        loading: false,
+        price: PRICE
     },
     methods: {
         addItem: function(index) {
@@ -49,6 +49,18 @@ new Vue({
                     }
                 }
             }
+        },
+        onSubmit: function() {
+            this.items = [];
+            this.loading = true;
+            this.$http
+                .get('/search/'.concat(this.newSearch))
+                .then(function(result) {
+                    this.lastSearch = this.newSearch;
+                    this.items = result.data;
+                    this.loading = false;
+                })
+            ;
         }
 
     },
@@ -56,5 +68,8 @@ new Vue({
         currency: function(price) {
             return '$'.concat(price.toFixed(2));
         }
+    },
+    mounted: function() {
+        this.onSubmit();
     }
 });
