@@ -1,4 +1,6 @@
 const PRICE = 9.95;
+const LOAD_NUM = 10;
+
 
 new Vue({
 
@@ -8,6 +10,7 @@ new Vue({
         total: 0,
         items: [],
         cart: [],
+        results: [],
         newSearch: 'futurama',
         lastSearch: '',
         loading: false,
@@ -51,16 +54,25 @@ new Vue({
             }
         },
         onSubmit: function() {
-            this.items = [];
-            this.loading = true;
-            this.$http
-                .get('/search/'.concat(this.newSearch))
-                .then(function(result) {
-                    this.lastSearch = this.newSearch;
-                    this.items = result.data;
-                    this.loading = false;
-                })
-            ;
+            if (this.newSearch.length) {
+                this.items = [];
+                this.loading = true;
+                this.$http
+                    .get('/search/'.concat(this.newSearch))
+                    .then(function(result) {
+                        this.lastSearch = this.newSearch;
+                        this.results = result.data;
+                        this.appendItems();
+                        this.loading = false;
+                });
+            }
+
+        },
+        appendItems: function() {
+            if (this.items.length < this.results.length) {
+                var append = this.results.slice(this.items.length, this.items.length + LOAD_NUM);
+                this.items = this.items.concat(append);
+            }
         }
 
     },
@@ -69,7 +81,19 @@ new Vue({
             return '$'.concat(price.toFixed(2));
         }
     },
+    computed: {
+        noMoreItems: function() {
+            return this.items.length === this.results.length && this.results.length > 0
+        }
+    },
     mounted: function() {
         this.onSubmit();
+        var vueInstance = this;
+        var watcherElement= document.getElementById('product-list-bottom');
+        var watcher = scrollMonitor.create(watcherElement);
+        watcher.enterViewport(function(){
+            vueInstance.appendItems()
+        });
     }
 });
+
